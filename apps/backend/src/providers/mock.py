@@ -24,7 +24,7 @@ class MockProvider(MarketDataProvider):
             # Yield a dummy tick
             yield Tick(
                 symbol="TEST",
-                price=100.0,
+                price=99.0,
                 volume=10,
                 timestamp=datetime.now(),
                 provider="mock"

@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 
 export interface Tick {
-  symbol: str;
+  symbol: string;
   price: number;
-  timestamp: number;
+  timestamp: string | number;
 }
 
 export const useStreamingData = (url: string) => {
