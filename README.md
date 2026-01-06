@@ -20,6 +20,15 @@ StockRhythm provides a modern, type-safe Python SDK for writing trading strategi
     ```
 *   **Docker**: For running the local backend engine.
 
+## 🛠 Architecture Philosophy
+
+StockRhythm utilizes a 4-layer stack to isolate trading logic from broker complexities:
+
+1.  **Broker API**: Raw market data and order execution.
+2.  **Backend Engine**: Handles Auth (TOTP/MPIN), Risk, and Normalization.
+3.  **Python SDK**: Provides a type-safe, simple interface for developers.
+4.  **Trading Strategy**: Your logic, completely abstracted from the broker.
+
 ## 🏁 Quick Start
 
 ### 1. Installation

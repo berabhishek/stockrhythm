@@ -12,13 +12,18 @@ logger = logging.getLogger("KotakProvider")
 class KotakProvider(MarketDataProvider):
     def __init__(self, api_key: str):
         # API Key is the "Access Token" from NEO Dashboard
-        self.access_token = api_key
+        self.access_token = api_key.strip() if api_key else ""
         
         # Load other secrets from Environment
-        self.mobile = os.getenv("KOTAK_MOBILE")
-        self.ucc = os.getenv("KOTAK_UCC") # Client Code
-        self.mpin = os.getenv("KOTAK_MPIN")
-        self.totp_secret = os.getenv("KOTAK_TOTP_SECRET") # Base32 Secret
+        self.mobile = os.getenv("KOTAK_MOBILE", "").strip()
+        self.ucc = os.getenv("KOTAK_UCC", "").strip()
+        self.mpin = os.getenv("KOTAK_MPIN", "").strip()
+        self.totp_secret = os.getenv("KOTAK_TOTP_SECRET", "").strip()
+        
+        # Auto-format mobile: ensure it starts with +91 if it's a 10-digit Indian number
+        if len(self.mobile) == 10 and self.mobile.isdigit():
+            self.mobile = f"+91{self.mobile}"
+            logger.info(f"Auto-formatted mobile number to {self.mobile}")
         
         if not all([self.mobile, self.ucc, self.mpin, self.totp_secret]):
             logger.warning("Missing Kotak Credentials in Environment (KOTAK_MOBILE, KOTAK_UCC, KOTAK_MPIN, KOTAK_TOTP_SECRET)")
@@ -125,10 +130,11 @@ class KotakProvider(MarketDataProvider):
                 query_string = ",".join(query_parts)
                 
                 # Quotes API Endpoint
-                # GET <Base URL>/script-details/1.0/quotes/neosymbol/<query>
-                # Headers: Authorization ONLY (Access Token)
-                # The doc example: .../quotes/neosymbol/nse_cm|Nifty 50,nse_cm|Nifty Bank/all
-                quote_url = f"{self.base_url}/script-details/1.0/quotes/neosymbol/{query_string}"
+                # GET <Base URL>/script-details/1.0/quotes/neosymbol/<query>[,<query>][/<filter_name>]
+                # We append '/all' filter as seen in documentation examples
+                quote_url = f"{self.base_url}/script-details/1.0/quotes/neosymbol/{query_string}/all"
+                
+                logger.debug(f"Polling Kotak Quotes: {quote_url}")
                 
                 headers = {
                     "Authorization": self.access_token,
@@ -139,23 +145,34 @@ class KotakProvider(MarketDataProvider):
                 
                 if resp.status_code == 200:
                     data = resp.json()
-                    # Response is a list of quote objects
+                    
+                    # Kotak returns a list of objects. If it returns a dict with 'stat': 'Not_Ok', handle it.
+                    if isinstance(data, dict) and data.get("stat") == "Not_Ok":
+                        logger.error(f"Kotak API Error: {data.get('emsg')}")
+                        continue
+
+                    if not isinstance(data, list):
+                        logger.error(f"Unexpected Kotak response format: {data}")
+                        continue
+
                     for item in data:
-                        # Extract fields
+                        if not isinstance(item, dict):
+                            continue
+                            
+                        # Extract fields safely
                         price = float(item.get("ltp", 0.0))
                         volume = float(item.get("last_volume", 0.0))
-                        # item['exchange_token'] might be "RELIANCE-EQ" or "1234"
                         symbol_name = item.get("display_symbol") or item.get("exchange_token")
                         
                         yield Tick(
-                            symbol=symbol_name,
+                            symbol=str(symbol_name),
                             price=price,
                             volume=volume,
                             timestamp=datetime.now(),
                             provider="kotak"
                         )
                 else:
-                    logger.error(f"Quote Poll Error: {resp.status_code} - {resp.text}")
+                    logger.error(f"Quote Poll HTTP Error: {resp.status_code} - {resp.text}")
 
             except Exception as e:
                 logger.error(f"Stream Loop Error: {e}")

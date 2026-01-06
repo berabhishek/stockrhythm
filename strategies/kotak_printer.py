@@ -17,4 +17,5 @@ if __name__ == "__main__":
     strategy = KotakPrinter()
     print("Starting Kotak Printer Strategy...")
     print("Make sure your Backend is running with Kotak Provider enabled!")
-    asyncio.run(strategy.start(subscribe=["nse_cm|RELIANCE-EQ"]))
+    # Reliance NSE Token: 2885
+    asyncio.run(strategy.start(subscribe=["nse_cm|2885"]))

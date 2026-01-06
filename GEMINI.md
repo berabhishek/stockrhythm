@@ -4,7 +4,13 @@ This document serves as the internal knowledge base for developing, maintaining,
 
 ## 1. Project Philosophy & Architecture
 
-StockRhythm is designed as a **"Split Package" Monorepo** managed by `uv`. This ensures strict versioning, isolated environments, and a seamless developer experience.
+StockRhythm follows a strict layered architecture to ensure modularity and ease of development.
+
+### The 4-Layer Platform Architecture
+1.  **Broker Layer (External)**: The raw APIs (Kotak, Upstox, Kite). Handles order execution and raw data streaming.
+2.  **Backend Layer (OS)**: The central trading engine (`apps/backend`). Handles data normalization, auth lifecycles (TOTP/MPIN), and pre-trade risk management.
+3.  **SDK Layer (Gateway)**: The Python library (`stockrhythm-sdk`). Provides type-safe Pydantic models and the base `Strategy` class. Abstract away all networking and JSON parsing.
+4.  **Strategy Layer (Brain)**: User-defined bots (`strategies/`). Focuses purely on trading logic using normalized data provided by the SDK.
 
 ### Core Principles
 *   **Developer-Centric:** The SDK (`stockrhythm-sdk`) is the "language" of the platform. It must remain lightweight and intuitive.
@@ -78,6 +84,11 @@ Ensure `uv` is installed:
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+### Dependency Management (IMPORTANT)
+**Do not use `pip` directly.** This project uses `uv` workspaces.
+*   **Install/Sync**: Run `uv sync` at the root to install all dependencies for all packages.
+*   **Add Dependency**: `uv add <package> --package backend` (or edit the specific `pyproject.toml` and run `uv sync`).
 
 ### Setup ("The Golden Path")
 1.  **Sync Dependencies**:
