@@ -42,13 +42,14 @@ docker-compose up -d backend
 
 ### 3. Create a Strategy
 
-Use the CLI to scaffold a new strategy:
+Use the CLI to scaffold a new strategy inside the `strategies/` directory:
 
 ```bash
 # Activate the virtual environment managed by uv
 source .venv/bin/activate
 
 # Create a new bot
+cd strategies
 stockrhythm init my-first-bot
 ```
 

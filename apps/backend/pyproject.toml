@@ -5,7 +5,10 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "redis",
-    "stockrhythm-sdk"
+    "stockrhythm-sdk",
+    "httpx",
+    "pyotp",
+    "python-dotenv"
 ]
 
 [tool.uv.sources]

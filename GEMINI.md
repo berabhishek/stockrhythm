@@ -21,9 +21,26 @@ graph TD
     Data -->|Normalizes| Upstox[Upstox Provider]
     Data -->|Normalizes| Kite[Kite Provider]
     Data -->|Generates| Mock[Mock Provider]
+    Data -->|Normalizes| Kotak[Kotak Provider]
 ```
 
-## 2. Directory Structure & Components
+## 2. Project Structure
+
+```text
+stockrhythm/
+├── apps/
+│   ├── backend/          # Trading Engine
+│   ├── mock_exchange/    # Simulator
+│   └── dashboard/        # UI
+├── packages/
+│   ├── stockrhythm-sdk/  # Client Library
+│   └── stockrhythm-cli/  # Scaffolding Tool
+├── strategies/           # User Bots (Standard location)
+├── tests/                # Verification Suite
+└── .env                  # Environment Config
+```
+
+## 3. Directory Structure & Components
 
 The project uses a standard `src` layout for all packages to prevent import ambiguities.
 
