@@ -1,0 +1,18 @@
+[project]
+name = "stockrhythm-cli"
+version = "0.1.0"
+dependencies = [
+    "typer",
+    "rich",
+    "stockrhythm-sdk"
+]
+
+[tool.uv.sources]
+stockrhythm-sdk = { workspace = true }
+
+[project.scripts]
+stockrhythm = "stockrhythm_cli.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

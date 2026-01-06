@@ -1,0 +1,4 @@
+active_provider: "mock"
+upstox_creds:
+  api_key: "INSERT_KEY"
+  token: "INSERT_TOKEN"

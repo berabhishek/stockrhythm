@@ -1,0 +1,11 @@
+[project]
+name = "stockrhythm-sdk"
+version = "0.1.0"
+dependencies = [
+    "pydantic",
+    "websockets"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

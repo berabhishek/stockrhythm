@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: ./apps/backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - questdb
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - QUESTDB_URL=http://questdb:9000
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  questdb:
+    image: questdb/questdb
+    ports:
+      - "9000:9000"
+      - "8812:8812"
