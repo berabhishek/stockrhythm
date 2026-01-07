@@ -43,49 +43,54 @@ uv sync
 
 ### 2. Start the Engine
 
-Launch the backend services (Mock Provider is enabled by default):
+Launch the backend services (Mock Provider is enabled by default).
 
+**Using Docker (Recommended):**
 ```bash
 docker-compose up -d backend
 ```
 
-### 3. Create a Strategy
+**Development Mode (Directly via Python):**
+```bash
+uv run uvicorn apps.backend.src.main:app --port 8000
+```
 
-Use the CLI to scaffold a new strategy inside the `strategies/` directory:
+### 3. Install the CLI Tool (Optional but Recommended)
+
+To create and manage strategies from anywhere on your system, install the StockRhythm CLI as a global tool:
 
 ```bash
-# Activate the virtual environment managed by uv
-source .venv/bin/activate
+uv tool install packages/stockrhythm-cli --editable
+```
 
-# Create a new bot
-cd strategies
+### 4. Create a Strategy
+
+You can now scaffold a new strategy inside the `strategies/` directory or even in a completely different project folder:
+
+```bash
+# In any directory
 stockrhythm init my-first-bot
+cd my-first-bot
 ```
 
-This creates a folder `my-first-bot/` with a `strategy.py` template:
+This creates a folder `my-first-bot/` with a `strategy.py` template.
 
-```python
-# my-first-bot/strategy.py
-from stockrhythm import Strategy, Tick
+### 5. Run Your Strategy
 
-class MyFirstStrategy(Strategy):
-    async def on_tick(self, tick: Tick):
-        print(f"Received: {tick}")
-        if tick.price < 100:
-            await self.buy(tick.symbol, 10)
-```
-
-### 4. Run Your Strategy
-
-(Note: You can run this directly with python if the SDK is in your path, or install the requirements)
+Run your strategy directly with `python`. The SDK automatically detects trading modes via CLI flags:
 
 ```bash
-cd my-first-bot
-pip install -r requirements.txt
+# Paper Trading (Default)
 python strategy.py
+
+# Explicit Paper Trading
+python strategy.py --paper
+
+# Live Trading (Requires Backend config)
+python strategy.py --live
 ```
 
-*The strategy will connect to the local backend, receive mock market data, and print ticks to the console.*
+*The strategy will connect to the local backend, receive market data, and execute trades based on the selected mode.*
 
 ## 📚 Documentation
 
