@@ -93,3 +93,5 @@ data/
 logs/
 *.log
 .uv/
+*.db
+*.sqlite
