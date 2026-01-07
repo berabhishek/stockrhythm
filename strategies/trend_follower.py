@@ -13,4 +13,5 @@ class TrendFollower(Strategy):
 if __name__ == "__main__":
     # Boilerplate to run the strategy
     strategy = TrendFollower()
-    asyncio.run(strategy.start())
+    # Explicitly subscribe to a symbol to receive ticks from the provider
+    asyncio.run(strategy.start(subscribe=["nse_cm|2885"]))

@@ -5,6 +5,9 @@ from stockrhythm import Strategy, Tick
 # Ensure you have set the KOTAK_... environment variables before running the backend!
 
 class KotakPrinter(Strategy):
+    def __init__(self):
+        super().__init__(paper_trade=True)
+
     async def on_tick(self, tick: Tick):
         # Simply print the received tick
         print(f"[{tick.timestamp}] {tick.symbol} CMP: {tick.price}")

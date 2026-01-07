@@ -85,9 +85,18 @@ Ensure `uv` is installed:
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### ⚠️ AGENT INSTRUCTION: ENVIRONMENT VARIABLES
+### ⚠️ AGENT INSTRUCTION: SAFETY & DATA
 **DO NOT TOUCH, MODIFY, OR READ THE `.env` FILE DIRECTLY.** 
 All sensitive credentials (API Keys, TOTP Secrets, etc.) are managed manually by the user. Agents should only provide placeholders or instructions on which variables need to be set.
+
+**DO NOT DELETE ANY DATABASE FILES.**
+Database files (e.g., `.db`, `.sqlite`, `paper_trades.db`) are considered permanent records. You are strictly prohibited from deleting, moving, or truncating them, even for testing or cleanup purposes.
+
+**DO NOT START/STOP STRATEGIES OR SERVERS.**
+You are not allowed to independently launch or terminate background processes, servers (e.g., uvicorn, docker-compose), or strategy scripts.
+
+**MINIMAL INTERFERENCE.**
+Always prefer non-destructive and non-interfering commands. If an action requires starting a service or running a script, provide the exact command to the user instead of executing it yourself.
 
 ### Dependency Management (IMPORTANT)
 **Do not use `pip` directly.** This project uses `uv` workspaces.
