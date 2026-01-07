@@ -6,7 +6,7 @@ from stockrhythm import Strategy, Tick
 
 class KotakPrinter(Strategy):
     def __init__(self):
-        super().__init__(paper_trade=True)
+        super().__init__()
 
     async def on_tick(self, tick: Tick):
         # Simply print the received tick

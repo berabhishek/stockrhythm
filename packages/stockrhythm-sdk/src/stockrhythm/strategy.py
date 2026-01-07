@@ -1,13 +1,39 @@
 import asyncio
+import sys
+import argparse
 from abc import ABC, abstractmethod
 from .models import Tick, Order, OrderSide, OrderType
 from .client import EngineClient
 
 class Strategy(ABC):
     def __init__(self, paper_trade: bool = True):
+        """
+        Initialize the strategy. CLI arguments --live/--paper take precedence
+        over the constructor's paper_trade argument.
+        """
+        # 1. Parse CLI arguments using argparse for robustness
+        # add_help=False ensures we don't interfere if the user handles -h/--help
+        parser = argparse.ArgumentParser(add_help=False)
+        parser.add_argument('--live', action='store_true', help='Run in live trading mode')
+        parser.add_argument('--paper', action='store_true', help='Run in paper trading mode')
+        
+        # parse_known_args only consumes the flags we defined, leaving others untouched
+        args, _ = parser.parse_known_args()
+
+        # 2. Determine mode with priority: CLI > Constructor > Default
+        if args.live:
+            self.paper_trade = False
+        elif args.paper:
+            self.paper_trade = True
+        else:
+            # Fallback to constructor argument
+            self.paper_trade = paper_trade
+
         self.client = EngineClient()
-        self.paper_trade = paper_trade
         self.context = {} 
+        
+        mode_str = "PAPER TRADING" if self.paper_trade else "LIVE TRADING"
+        print(f"Strategy Initialized in {mode_str} mode.")
 
     async def start(self, subscribe: list[str] = None):
         """Internal Event Loop: Connects to Backend and routes ticks"""
