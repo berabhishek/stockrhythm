@@ -111,10 +111,6 @@ The backend configuration is located in `apps/backend/config.yaml`.
 
 We welcome contributions! Please see [GEMINI.md](GEMINI.md) for detailed architecture documentation and development guidelines.
 
-### ⚠️ AGENT INSTRUCTION: ENVIRONMENT VARIABLES
-**DO NOT TOUCH, MODIFY, OR READ THE `.env` FILE DIRECTLY.** 
-Sensitive credentials must be managed manually.
-
 ## 📄 License
 
 MIT
