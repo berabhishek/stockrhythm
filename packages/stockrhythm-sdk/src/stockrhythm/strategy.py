@@ -4,13 +4,15 @@ from .models import Tick, Order, OrderSide, OrderType
 from .client import EngineClient
 
 class Strategy(ABC):
-    def __init__(self):
+    def __init__(self, paper_trade: bool = True):
         self.client = EngineClient()
+        self.paper_trade = paper_trade
         self.context = {} 
 
     async def start(self, subscribe: list[str] = None):
         """Internal Event Loop: Connects to Backend and routes ticks"""
-        await self.client.connect()
+        # We pass the paper_trade preference to the client
+        await self.client.connect(paper_trade=self.paper_trade)
         # The client.stream() method yields Ticks from the Backend's Data Orchestrator
         async for tick in self.client.stream_market_data(subscribe=subscribe):
             await self.on_tick(tick)

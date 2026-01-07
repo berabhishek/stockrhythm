@@ -107,19 +107,14 @@ class KotakProvider(MarketDataProvider):
         """
         Polls the Quotes API for all subscribed symbols.
         """
-        if not self.subscribed_symbols:
-            logger.warning("No symbols subscribed.")
-            while True: await asyncio.sleep(1)
-
-        # Helper to format symbol for Query
-        # Input: "RELIANCE" -> Output: "nse_cm|RELIANCE-EQ" (Naive assumption for demo)
-        # Better: User should pass full format "nse_cm|RELIANCE-EQ"
-        
         while True:
+            if not self.subscribed_symbols:
+                # Wait for symbols to be subscribed via the WebSocket 'configure' action
+                await asyncio.sleep(0.5)
+                continue
+
             try:
                 # Construct Query
-                # API format: nse_cm|Nifty 50,nse_cm|RELIANCE-EQ
-                # We assume the user passes correct strings or we fix them simply
                 query_parts = []
                 for s in self.subscribed_symbols:
                     if "|" not in s:

@@ -12,23 +12,15 @@ class EngineClient:
         self.backend_url = backend_url
         self._connected = False
         self.ws = None
+        self.paper_trade = True
 
-    async def connect(self):
+    async def connect(self, paper_trade: bool = True):
         """
         Connect to the backend engine.
         """
-        try:
-            # We delay actual connection to stream_market_data or do it here
-            # For simplicity, we just mark as ready, but connection happens in stream loop
-            # or we establish it now. Let's establish it now.
-            # self.ws = await websockets.connect(self.backend_url) 
-            # Re-design: Strategy.start() calls connect() then stream().
-            pass 
-        except Exception as e:
-            print(f"Failed to connect: {e}")
-            raise
+        self.paper_trade = paper_trade
         self._connected = True
-        print(f"Client Initialized for {self.backend_url}")
+        print(f"Client Initialized (Paper Trading: {self.paper_trade})")
 
     async def stream_market_data(self, subscribe: list[str] = None) -> AsyncIterable[Tick]:
         """
@@ -41,10 +33,13 @@ class EngineClient:
             self.ws = websocket
             print("Connected to Backend WebSocket.")
             
-            if subscribe:
-                print(f"Subscribing to: {subscribe}")
-                # Send subscription message (Backend needs to handle this!)
-                await websocket.send(json.dumps({"action": "subscribe", "symbols": subscribe}))
+            # Send initial configuration handshake
+            handshake = {
+                "action": "configure",
+                "paper_trade": self.paper_trade,
+                "subscribe": subscribe
+            }
+            await websocket.send(json.dumps(handshake))
             
             try:
                 async for message in websocket:
@@ -58,6 +53,13 @@ class EngineClient:
         """
         Sends an order to the Backend.
         """
-        if not self._connected:
-            raise ConnectionError("Client not connected")
-        print(f"Sending Order: {order}")
+        if not self.ws:
+            raise ConnectionError("WebSocket connection not established")
+        
+        # Standardize message
+        payload = {
+            "action": "order",
+            "data": order.model_dump(mode='json')
+        }
+        await self.ws.send(json.dumps(payload))
+        print(f"Order Submitted: {order.symbol} {order.side} {order.qty}")

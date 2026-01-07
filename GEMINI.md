@@ -85,6 +85,10 @@ Ensure `uv` is installed:
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+### ⚠️ AGENT INSTRUCTION: ENVIRONMENT VARIABLES
+**DO NOT TOUCH, MODIFY, OR READ THE `.env` FILE DIRECTLY.** 
+All sensitive credentials (API Keys, TOTP Secrets, etc.) are managed manually by the user. Agents should only provide placeholders or instructions on which variables need to be set.
+
 ### Dependency Management (IMPORTANT)
 **Do not use `pip` directly.** This project uses `uv` workspaces.
 *   **Install/Sync**: Run `uv sync` at the root to install all dependencies for all packages.
