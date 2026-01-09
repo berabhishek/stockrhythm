@@ -44,9 +44,14 @@ class InstrumentMaster:
                 reader = csv.DictReader(f)
                 for row in reader:
                     symbol = row.get("symbol", "").upper()
-                    token = row.get("token")
+                    
+                    # New Schema: symbol,exchange,series,isin,nse_scrip_code,bse_code
+                    token = row.get("nse_scrip_code")
                     exchange = row.get("exchange", "NSE").lower()
-                    segment = row.get("segment", "CM").lower()
+                    
+                    # Infer segment from series or default to cm
+                    # In new CSV, we are primarily dealing with Equity
+                    segment = "cm" 
                     
                     if symbol and token:
                         # Construct the canonical token ID used by Kotak Provider

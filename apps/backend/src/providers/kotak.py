@@ -125,7 +125,6 @@ class KotakProvider(MarketDataProvider):
                         query_parts.append(f"nse_cm|{s}-EQ")
                 
                 query_string = ",".join(query_parts)
-                print(f"DEBUG: Sending to Kotak -> {query_string}")
                 
                 # Quotes API Endpoint
                 # GET <Base URL>/script-details/1.0/quotes/neosymbol/<query>[,<query>][/<filter_name>]
