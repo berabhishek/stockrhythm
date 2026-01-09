@@ -35,8 +35,16 @@ class MockProvider(MarketDataProvider):
         # Dummy snapshot for testing universe filters
         result = {}
         for sym in symbols:
-            result[sym] = {
-                "last_price": 100.0,
-                "day_volume": 500000,
-            }
+            # Check if it matches our test cases
+            if sym == "nse_cm|2885" or sym == "nse_cm|99999" or "TEST" in sym:
+                result[sym] = {
+                    "last_price": 100.0,
+                    "day_volume": 500000,
+                }
+            else:
+                # Default for others
+                result[sym] = {
+                    "last_price": 100.0,
+                    "day_volume": 500000,
+                }
         return result

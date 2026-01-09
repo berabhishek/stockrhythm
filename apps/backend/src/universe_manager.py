@@ -5,6 +5,7 @@ from typing import List, Set, Dict, Any, Optional
 
 from stockrhythm.models import UniverseFilterSpec, UniverseUpdate, FilterOp
 from .providers.base import MarketDataProvider
+from .instrument_master import InstrumentMaster
 
 def _passes(value, op: FilterOp, target) -> bool:
     if op == FilterOp.EQ: return value == target
@@ -27,12 +28,28 @@ class UniverseResolver:
       - instrument master resolver
       - watchlist passthrough
     """
+    def __init__(self, instrument_master: Optional[InstrumentMaster] = None):
+        self.master = instrument_master or InstrumentMaster()
+        # Ensure master is loaded
+        self.master.load()
+
     async def candidates(self, spec: UniverseFilterSpec) -> List[str]:
         c = spec.candidates or {}
         t = c.get("type")
 
         if t == "watchlist":
-            return list(c.get("symbols", []))
+            raw_symbols = list(c.get("symbols", []))
+            resolved_tokens = []
+            for sym in raw_symbols:
+                # Try to map RELIANCE -> nse_cm|2885
+                token = self.master.resolve(sym)
+                if token:
+                    resolved_tokens.append(token)
+                else:
+                    # Fallback: if user passed a token directly or mapping missing
+                    print(f"Warning: Symbol {sym} not found in master, using as-is.")
+                    resolved_tokens.append(sym)
+            return resolved_tokens
 
         # Placeholder: you will implement real index/instrument_master sources
         if t == "index":
