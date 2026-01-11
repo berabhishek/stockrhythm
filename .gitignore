@@ -90,7 +90,6 @@ out/
 
 # --- Project Specific ---
 # Add any local database or data folders here
-data/
 logs/
 *.log
 .uv/

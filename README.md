@@ -65,32 +65,44 @@ uv tool install packages/stockrhythm-cli --editable
 
 ### 4. Create a Strategy
 
-You can now scaffold a new strategy inside the `strategies/` directory or even in a completely different project folder:
+You can now scaffold a professional, production-ready trading project in any directory:
 
 ```bash
 # In any directory
-stockrhythm init my-first-bot
-cd my-first-bot
+stockrhythm init my-cool-bot
+cd my-cool-bot
 ```
 
-This creates a folder `my-first-bot/` with a `strategy.py` template.
+This creates a structured project with segregated configuration, alpha logic, and execution scripts:
+```text
+my-cool-bot/
+├── config/              # Strategy & Market configurations
+├── src/                 # Proprietary Alpha & Signal logic
+├── scripts/             # Execution runners (Live/Paper/Backtest)
+└── requirements.txt     # Local SDK & dependencies
+```
 
 ### 5. Run Your Strategy
 
-Run your strategy directly with `python`. The SDK automatically detects trading modes via CLI flags:
+First, install the local dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+Then, execute your strategy using the provided runner script. The SDK automatically detects trading modes via CLI flags:
 
 ```bash
 # Paper Trading (Default)
-python strategy.py
+python scripts/live_runner.py
 
 # Explicit Paper Trading
-python strategy.py --paper
+python scripts/live_runner.py --paper
 
 # Live Trading (Requires Backend config)
-python strategy.py --live
+python scripts/live_runner.py --live
 ```
 
-*The strategy will connect to the local backend, receive market data, and execute trades based on the selected mode.*
+*The runner loads your configuration from `config/strategies/`, initializes your alpha signals, and connects to the StockRhythm backend for execution.*
 
 ## 📚 Documentation
 

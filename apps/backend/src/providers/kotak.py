@@ -117,10 +117,12 @@ class KotakProvider(MarketDataProvider):
                 # Construct Query
                 query_parts = []
                 for s in self.subscribed_symbols:
-                    if "|" not in s:
-                         query_parts.append(f"nse_cm|{s}-EQ") # Default to NSE Equity
-                    else:
+                    # If it's a canonical token (has pipe) or user-constructed string, pass it
+                    if "|" in s:
                         query_parts.append(s)
+                    # Fallback for raw symbols without pipe -> legacy construction
+                    else:
+                        query_parts.append(f"nse_cm|{s}-EQ")
                 
                 query_string = ",".join(query_parts)
                 
@@ -129,6 +131,7 @@ class KotakProvider(MarketDataProvider):
                 # We append '/all' filter as seen in documentation examples
                 quote_url = f"{self.base_url}/script-details/1.0/quotes/neosymbol/{query_string}/all"
                 
+                logger.info(f"Looking up Kotak symbols: {query_string}")
                 logger.debug(f"Polling Kotak Quotes: {quote_url}")
                 
                 headers = {

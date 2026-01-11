@@ -1,15 +1,11 @@
+import asyncio
+import os
+import threading
+
 import pytest
 import pytest_asyncio
-import asyncio
-import threading
 import uvicorn
-import os
 from stockrhythm import Strategy, Tick
-from apps.backend.src import main
-from dotenv import load_dotenv
-
-# Load env vars to ensure we have credentials
-load_dotenv()
 
 # We use a unique port for testing to avoid conflicts
 TEST_PORT = 8002
@@ -17,6 +13,7 @@ TEST_WS_URL = f"ws://127.0.0.1:{TEST_PORT}"
 
 def run_server():
     """Starts the Real Backend Engine in a background thread."""
+    from apps.backend.src import main
     # Force the backend to use Kotak for this test run
     main.CONFIG["active_provider"] = "kotak"
     
@@ -29,9 +26,12 @@ def run_server():
 @pytest_asyncio.fixture(scope="module")
 async def real_backend():
     """Fixture to spin up the real backend server."""
+    if not os.getenv("STOCKRHYTHM_RUN_KOTAK_E2E"):
+        pytest.skip("Skipping E2E Test: Set STOCKRHYTHM_RUN_KOTAK_E2E=1 to enable.")
+
     access_token = os.getenv("KOTAK_ACCESS_TOKEN")
     if not access_token or access_token == "your_access_token_here":
-        pytest.skip("Skipping E2E Test: Real Kotak Credentials not found in .env")
+        pytest.skip("Skipping E2E Test: Real Kotak Credentials not found in environment.")
 
     # Start the server in a daemon thread
     thread = threading.Thread(target=run_server, daemon=True)
