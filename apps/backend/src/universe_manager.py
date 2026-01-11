@@ -57,7 +57,7 @@ class UniverseResolver:
             return ["NSE_CM|123", "NSE_CM|456"]
 
         if t == "instrument_master":
-             # Just return dummy symbols for now to test flow
+            # Just return dummy symbols for now to test flow
             return ["NSE_CM|111", "NSE_CM|222"]
 
         return []
