@@ -4,14 +4,14 @@ import inspect
 import json
 import sys
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import typer
 from stockrhythm import Strategy
 from stockrhythm.models import UniverseFilterSpec
 
 
-FilterInput = Union[UniverseFilterSpec, list[str], None]
+FilterInput = Union[UniverseFilterSpec, List[str], None]
 
 
 def _load_module(file_path: Path):
