@@ -1,7 +1,7 @@
 from __future__ import annotations
 import asyncio
 import time
-from typing import List, Set, Dict, Any, Optional
+from typing import List, Set, Optional
 
 from stockrhythm.models import UniverseFilterSpec, UniverseUpdate, FilterOp
 from .providers.base import MarketDataProvider
