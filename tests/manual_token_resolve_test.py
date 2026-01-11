@@ -40,4 +40,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        pass
+        print("\nManual token resolve test interrupted by user.")
