@@ -1,13 +1,16 @@
-import pytest
 import asyncio
+import importlib
 import sqlite3
-import os
-from stockrhythm import Strategy, Tick
-from apps.backend.src import main
+
+import dotenv
+import pytest
 from fastapi.testclient import TestClient
+from stockrhythm import Strategy, Tick
+
+from apps.backend.src import paper_engine
 
 @pytest.mark.asyncio
-async def test_paper_trading_sqlite_persistence():
+async def test_paper_trading_sqlite_persistence(monkeypatch, tmp_path):
     """
     Validates that:
     1. Strategy sets paper_trade=True.
@@ -15,10 +18,13 @@ async def test_paper_trading_sqlite_persistence():
     3. Backend saves the trade to paper_trades.db.
     """
     
-    # 1. Clean up old DB if exists
-    DB_PATH = "paper_trades.db"
-    if os.path.exists(DB_PATH):
-        os.remove(DB_PATH)
+    # 1. Point the paper engine to a temp DB to avoid touching repo files
+    db_path = tmp_path / "paper_trades.db"
+    monkeypatch.setenv("STOCKRHYTHM_PROVIDER", "mock")
+    monkeypatch.setattr(dotenv, "load_dotenv", lambda *args, **kwargs: None)
+    monkeypatch.setattr(paper_engine, "DB_PATH", str(db_path))
+    from apps.backend.src import main
+    importlib.reload(main)
 
     # 2. Define Strategy
     class PaperBot(Strategy):
@@ -62,9 +68,9 @@ async def test_paper_trading_sqlite_persistence():
             await asyncio.sleep(1)
 
     # 4. Assert SQLite state
-    assert os.path.exists(DB_PATH)
-    
-    conn = sqlite3.connect(DB_PATH)
+    assert db_path.exists()
+
+    conn = sqlite3.connect(str(db_path))
     cursor = conn.cursor()
     
     # Check Orders

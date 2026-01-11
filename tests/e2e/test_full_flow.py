@@ -26,14 +26,16 @@ class TestEndToEnd:
         E2E Step 1: User runs 'stockrhythm init <name>'
         Expectation: Folder created with strategy.py and requirements.txt
         """
-        result = runner.invoke(app, ["init", clean_env])
-        assert result.exit_code == 0
-        assert f"Initialized new strategy in directory: {clean_env}" in result.stdout
-        
-        path = Path(clean_env)
-        assert path.exists()
-        assert (path / "strategy.py").exists()
-        assert (path / "requirements.txt").exists()
+        with runner.isolated_filesystem():
+            result = runner.invoke(app, ["init", clean_env])
+            assert result.exit_code == 0
+            assert "Initialized StockRhythm project" in result.stdout
+            assert f"cd {clean_env}" in result.stdout
+
+            path = Path(clean_env)
+            assert path.exists()
+            assert (path / "strategies" / "strategy.py").exists()
+            assert (path / "requirements.txt").exists()
 
     @pytest.mark.asyncio
     async def test_strategy_logic_flow(self):

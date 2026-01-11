@@ -9,7 +9,7 @@ SubscribeInput = Union[List[str], UniverseFilterSpec]
 def _model_dump(obj):
     # pydantic v1/v2 compatibility
     if hasattr(obj, "model_dump"):
-        return obj.model_dump()
+        return obj.model_dump(mode='json')
     return obj.dict()
 
 class EngineClient:
