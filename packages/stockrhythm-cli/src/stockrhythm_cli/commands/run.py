@@ -123,19 +123,76 @@ def run_strategy(
     asyncio.run(strategy.start(subscribe=subscribe))
 
 
+def run_backtest(
+    *,
+    file: Path,
+    start_at: str,
+    end_at: str,
+    symbols: Optional[List[str]],
+    db_path: str,
+    name: Optional[str],
+) -> None:
+    module = _load_module(file)
+    strategy = _resolve_strategy(module, paper_trade=True)
+
+    run_id = asyncio.run(
+        strategy.backtest(
+            start_at=start_at,
+            end_at=end_at,
+            symbols=symbols,
+            db_path=db_path,
+            name=name,
+        )
+    )
+    typer.echo(f"Backtest completed. Run ID: {run_id}")
+
+
 def run(
-    file: str = typer.Option("strategies/strategy.py", "--file", "-f"),
+    file: Optional[str] = typer.Option(None, "--file", "-f"),
     filter_path: Optional[str] = typer.Option(None, "--filter"),
     paper: bool = typer.Option(False, "--paper", help="Run in paper trading mode."),
     live: bool = typer.Option(False, "--live", help="Run in live trading mode."),
+    backtest: bool = typer.Option(False, "--backtest", help="Run in backtest mode."),
+    start_at: Optional[str] = typer.Option(None, "--start", help="Backtest start datetime (ISO)."),
+    end_at: Optional[str] = typer.Option(None, "--end", help="Backtest end datetime (ISO)."),
+    symbols: Optional[List[str]] = typer.Option(None, "--symbol", help="Backtest symbol (repeatable)."),
+    db_path: str = typer.Option("backtests.db", "--db-path", help="Backtest SQLite DB path."),
+    name: Optional[str] = typer.Option(None, "--name", help="Backtest run name."),
     backend_url: Optional[str] = typer.Option(None, "--backend-url"),
 ):
+    if backtest and (paper or live):
+        raise typer.BadParameter("Use --backtest alone, without --paper or --live.")
+
+    if backtest:
+        if not file:
+            file = typer.prompt("Strategy file path", default="strategies/strategy.py")
+        if not start_at:
+            start_at = typer.prompt("Backtest start datetime (ISO)")
+        if not end_at:
+            end_at = typer.prompt("Backtest end datetime (ISO)")
+
+        try:
+            run_backtest(
+                file=Path(file),
+                start_at=start_at,
+                end_at=end_at,
+                symbols=symbols,
+                db_path=db_path,
+                name=name,
+            )
+        except KeyboardInterrupt:
+            typer.echo("Backtest interrupted.")
+        return
+
     if paper and live:
         raise typer.BadParameter("Choose either --paper or --live, not both.")
 
     paper_trade = True if not live else False
     if paper:
         paper_trade = True
+
+    if not file:
+        file = "strategies/strategy.py"
 
     try:
         run_strategy(

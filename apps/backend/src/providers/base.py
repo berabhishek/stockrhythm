@@ -33,3 +33,16 @@ class MarketDataProvider(ABC):
         Not required for all providers, but needed for dynamic filters.
         """
         raise NotImplementedError
+
+    async def historical(
+        self,
+        symbols: List[str],
+        start_at: str,
+        end_at: str,
+        interval: str | None = None,
+    ) -> List[Tick]:
+        """
+        Return historical ticks between start_at and end_at for the given symbols.
+        Provider implementations should normalize vendor responses into Tick objects.
+        """
+        raise NotImplementedError

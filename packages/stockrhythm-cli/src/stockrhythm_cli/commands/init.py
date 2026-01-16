@@ -18,7 +18,7 @@ class MyStrategy(Strategy):
 def get_filter():
     # Return a UniverseFilter object or a UniverseFilterSpec.
     return (
-        UniverseFilter.from_watchlist(["TEST"])
+        UniverseFilter.from_watchlist(["RELIANCE"])
         .where("day_volume", FilterOp.GT, 1)
     )
 
@@ -40,7 +40,7 @@ FILTER_JSON = """
 {
   "candidates": {
     "type": "watchlist",
-    "symbols": ["TEST"]
+    "symbols": ["RELIANCE"]
   },
   "conditions": [
     {

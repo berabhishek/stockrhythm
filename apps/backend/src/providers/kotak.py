@@ -177,3 +177,28 @@ class KotakProvider(MarketDataProvider):
             
             # Rate Limit Friendly (Doc says 10 req/s, we do 1s poll)
             await asyncio.sleep(1)
+
+    async def historical(
+        self,
+        symbols: list[str],
+        start_at: str,
+        end_at: str,
+        interval: str | None = None,
+    ) -> list[Tick]:
+        raise NotImplementedError("Kotak provider does not support historical data for backtesting.")
+
+    @staticmethod
+    def _parse_timestamp(value):
+        if value is None:
+            return datetime.now()
+        if isinstance(value, (int, float)):
+            # Heuristic: ms vs seconds
+            if value > 1_000_000_000_000:
+                return datetime.fromtimestamp(value / 1000)
+            return datetime.fromtimestamp(value)
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value)
+            except ValueError:
+                pass
+        return datetime.now()

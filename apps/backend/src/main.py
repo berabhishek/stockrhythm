@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
 from .data_orchestrator import get_provider
 from .paper_engine import PaperEngine
 from stockrhythm.models import Order as OrderModel, UniverseFilterSpec
@@ -19,6 +20,26 @@ CONFIG = {
     "active_provider": os.getenv("STOCKRHYTHM_PROVIDER", "mock"),
     "kotak_access_token": os.getenv("KOTAK_ACCESS_TOKEN")
 }
+
+
+class BacktestRequest(BaseModel):
+    symbols: list[str]
+    start: str
+    end: str
+    interval: str | None = None
+
+
+@app.post("/backtest")
+async def backtest(request: BacktestRequest):
+    provider = get_provider(CONFIG)
+    await provider.connect()
+    ticks = await provider.historical(
+        symbols=request.symbols,
+        start_at=request.start,
+        end_at=request.end,
+        interval=request.interval,
+    )
+    return {"ticks": [tick.model_dump(mode="json") for tick in ticks]}
 
 @app.get("/health")
 def health_check():
@@ -136,4 +157,3 @@ async def websocket_endpoint(websocket: WebSocket):
             universe_task.cancel()
         if tick_task:
             tick_task.cancel()
-

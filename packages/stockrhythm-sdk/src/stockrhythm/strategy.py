@@ -97,3 +97,23 @@ class Strategy(ABC):
         # Wraps logic into an Order object and sends to Backend via Client
         order = Order(symbol=symbol, qty=qty, side=OrderSide.BUY, type=OrderType.MARKET)
         await self.client.submit_order(order)
+
+    async def backtest(
+        self,
+        start_at,
+        end_at,
+        *,
+        symbols: Optional[List[str]] = None,
+        db_path: str = "backtests.db",
+        name: Optional[str] = None,
+    ) -> int:
+        from .backtest import BacktestEngine
+
+        engine = BacktestEngine(db_path=db_path)
+        return await engine.run(
+            self,
+            start_at=start_at,
+            end_at=end_at,
+            symbols=symbols,
+            name=name,
+        )
