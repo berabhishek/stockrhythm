@@ -52,4 +52,4 @@ async def test_upstox_historical_parses_candles():
     assert ticks[0].price == 102.0
     assert ticks[0].volume == 1200.0
     assert ticks[0].provider == "upstox"
-    assert "NSE_EQ%7CINE848E01016/minutes/1/2025-01-02/2025-01-01" in client.last_url
+    assert "NSE_EQ%7CINE848E01016/1minute/2025-01-02/2025-01-01" in client.last_url

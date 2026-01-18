@@ -1,11 +1,16 @@
-from .base import MarketDataProvider
-from stockrhythm.models import Tick
-from datetime import datetime
 import asyncio
-import httpx
 import logging
 import os
+from datetime import datetime
 from urllib.parse import quote
+
+import httpx
+
+from stockrhythm.models import Tick
+
+from ..auth_store import AuthStore
+from ..upstox_auth import exchange_auth_code
+from .base import MarketDataProvider
 
 logger = logging.getLogger("UpstoxProvider")
 
@@ -16,15 +21,19 @@ class UpstoxProvider(MarketDataProvider):
         api_key: str | None = None,
         token: str | None = None,
         api_secret: str | None = None,
+        auth_store: AuthStore | None = None,
     ):
         self.api_key = (api_key or os.getenv("UPSTOX_API_KEY", "")).strip()
         self.api_secret = (api_secret or os.getenv("UPSTOX_API_SECRET", "")).strip()
         self.access_token = (token or os.getenv("UPSTOX_ACCESS_TOKEN", "")).strip()
         self.auth_code = os.getenv("UPSTOX_AUTH_CODE", "").strip()
         self.redirect_uri = os.getenv("UPSTOX_REDIRECT_URI", "").strip()
+        self.auth_store = auth_store
 
         if not self.api_key or not self.api_secret:
-            logger.warning("Missing Upstox credentials in environment (UPSTOX_API_KEY, UPSTOX_API_SECRET).")
+            logger.warning(
+                "Missing Upstox credentials in environment (UPSTOX_API_KEY, UPSTOX_API_SECRET)."
+            )
 
         self.client = httpx.AsyncClient(timeout=10.0)
         self.base_url = "https://api.upstox.com/v2"
@@ -35,13 +44,22 @@ class UpstoxProvider(MarketDataProvider):
         Initializes the session by ensuring an access token is available.
         If no access token is set, tries to exchange auth code for one.
         """
+        if self.access_token:
+            if self.auth_store and not self.auth_store.get_valid_upstox_token():
+                self.auth_store.save_upstox_token(self.access_token)
+            return
+
+        if not self.access_token and self.auth_store:
+            self.access_token = self.auth_store.get_valid_upstox_token() or ""
+
         if not self.access_token:
             await self._exchange_auth_code()
 
         if not self.access_token:
             raise ValueError(
-                "Missing Upstox access token. Set UPSTOX_ACCESS_TOKEN or provide "
-                "UPSTOX_AUTH_CODE and UPSTOX_REDIRECT_URI to exchange via API key/secret."
+                "Missing Upstox access token. Visit /upstox/auth on the backend "
+                "or set UPSTOX_ACCESS_TOKEN. You can also provide UPSTOX_AUTH_CODE "
+                "and UPSTOX_REDIRECT_URI to exchange via API key/secret."
             )
 
         logger.info("Connected to Upstox.")
@@ -60,7 +78,9 @@ class UpstoxProvider(MarketDataProvider):
                 continue
 
             try:
-                instrument_keys = [self._normalize_symbol(symbol) for symbol in self.subscribed_symbols]
+                instrument_keys = [
+                    self._normalize_symbol(symbol) for symbol in self.subscribed_symbols
+                ]
                 query = ",".join(instrument_keys)
                 quote_url = f"{self.base_url}/market-quote/ltp"
 
@@ -69,7 +89,9 @@ class UpstoxProvider(MarketDataProvider):
                     "Accept": "application/json",
                 }
 
-                resp = await self.client.get(quote_url, headers=headers, params={"instrument_key": query})
+                resp = await self.client.get(
+                    quote_url, headers=headers, params={"instrument_key": query}
+                )
 
                 if resp.status_code != 200:
                     logger.error(f"Upstox Quote Error: {resp.status_code} - {resp.text}")
@@ -165,24 +187,28 @@ class UpstoxProvider(MarketDataProvider):
         if not (self.api_key and self.api_secret and self.auth_code and self.redirect_uri):
             return
 
-        token_url = f"{self.base_url}/login/authorization/token"
-        data = {
-            "code": self.auth_code,
-            "client_id": self.api_key,
-            "client_secret": self.api_secret,
-            "redirect_uri": self.redirect_uri,
-            "grant_type": "authorization_code",
-        }
-
-        resp = await self.client.post(token_url, data=data)
-        if resp.status_code != 200:
-            logger.error(f"Upstox token exchange failed: {resp.status_code} - {resp.text}")
+        try:
+            payload = await exchange_auth_code(
+                api_key=self.api_key,
+                api_secret=self.api_secret,
+                auth_code=self.auth_code,
+                redirect_uri=self.redirect_uri,
+            )
+        except Exception as exc:
+            logger.error(f"Upstox token exchange failed: {exc}")
             return
 
-        payload = resp.json()
         self.access_token = str(payload.get("access_token", "")).strip()
         if not self.access_token:
             logger.error("Upstox token exchange succeeded but access_token is missing.")
+            return
+
+        if self.auth_store:
+            self.auth_store.save_upstox_token(
+                self.access_token,
+                expires_in=payload.get("expires_in"),
+                refresh_token=payload.get("refresh_token"),
+            )
 
     @staticmethod
     def _normalize_symbol(symbol: str) -> str:
@@ -200,17 +226,24 @@ class UpstoxProvider(MarketDataProvider):
     @staticmethod
     def _format_interval(interval: str | None) -> str:
         if not interval:
-            return "minutes/1"
+            return "1minute"
         if "/" in interval:
+            unit, multiplier = interval.split("/", 1)
+            unit = unit.strip().lower()
+            multiplier = multiplier.strip()
+            if multiplier.isdigit():
+                return UpstoxProvider._format_interval(f"{multiplier}{unit[0]}")
             return interval
         value = interval.strip().lower()
         if value.endswith("m") and value[:-1].isdigit():
-            return f"minutes/{value[:-1]}"
+            return f"{value[:-1]}minute"
         if value.endswith("h") and value[:-1].isdigit():
-            return f"hours/{value[:-1]}"
+            return f"{value[:-1]}hour"
         if value.endswith("d") and value[:-1].isdigit():
-            return f"days/{value[:-1]}"
-        return f"minutes/{value}"
+            return "day" if value[:-1] == "1" else f"{value[:-1]}day"
+        if value in ("day", "week", "month"):
+            return value
+        return value
 
     @staticmethod
     def _parse_timestamp(value):

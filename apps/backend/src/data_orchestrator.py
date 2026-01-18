@@ -1,16 +1,20 @@
-from .providers.upstox import UpstoxProvider
-from .providers.mock import MockProvider
+from .auth_store import AuthStore
 from .providers.kotak import KotakProvider
+from .providers.mock import MockProvider
+from .providers.upstox import UpstoxProvider
 
 
 def get_provider(config: dict, provider_override: str | None = None):
     mode = (provider_override or config.get("active_provider") or "").strip()
     if mode == "upstox":
         upstox_creds = config.get("upstox_creds", {})
+        auth_db_path = config.get("auth_db_path", "auth.db")
+        auth_store = AuthStore(db_path=auth_db_path)
         return UpstoxProvider(
             api_key=upstox_creds.get("api_key"),
             token=upstox_creds.get("token"),
             api_secret=upstox_creds.get("api_secret"),
+            auth_store=auth_store,
         )
     elif mode == "kotak":
         return KotakProvider(api_key=config.get("kotak_access_token"))

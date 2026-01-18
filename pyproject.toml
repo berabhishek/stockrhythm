@@ -21,6 +21,8 @@ dev = [
     "pytest-cov>=7.0.0",
     "stockrhythm-cli",
     "typer>=0.9.0",
+    "ruff>=0.5.0",
+    "pre-commit>=3.0.0",
 ]
 
 [tool.uv.sources]
@@ -34,3 +36,54 @@ pythonpath = [
     "packages/stockrhythm-cli/src"
 ]
 asyncio_mode = "strict"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [
+    ".git",
+    ".venv",
+    "node_modules",
+    ".pytest_cache",
+    "__pycache__",
+    ".venv",
+    "venv",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes (unused imports, undefined names)
+    "I",      # isort (import sorting)
+    "UP",     # pyupgrade (modern Python syntax)
+    "ASYNC",  # flake8-async (async/await issues)
+    "A",      # flake8-builtins (builtin shadowing)
+    "C4",     # flake8-comprehensions
+    "DTZ",    # flake8-datetimez (datetime issues)
+    "FURB",   # refurb (modernization)
+    "LOG",    # flake8-logging (logging best practices)
+    "PERF",   # Perflint (performance issues)
+    "PT",     # flake8-pytest-style
+    "RUF",    # Ruff-specific rules
+    "SIM",    # flake8-simplify
+    "SLOT",   # flake8-slots
+    "T20",    # flake8-print (debug print statements)
+]
+ignore = [
+    "E501",   # Line too long (handled by formatter)
+    "W605",   # Invalid escape sequence (often in docstrings)
+    "A003",   # Builtin shadowing in class definitions (common pattern)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["stockrhythm"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["T20"]  # Allow print in tests
+"**/conftest.py" = ["F401"]  # Allow unused imports in pytest config
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
