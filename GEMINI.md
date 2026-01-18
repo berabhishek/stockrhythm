@@ -120,6 +120,7 @@ Always prefer non-destructive and non-interfering commands. If an action require
 *   **Integration Tests**: Located in `tests/integration`.
     1.  Set `active_provider: "mock"` in `apps/backend/config.yaml`.
     2.  Run a test bot using the SDK against the running Backend.
+*   **Agent Expectation**: Always add unit tests for new features and run relevant tests to confirm they pass.
 
 ## 4. Extending the Platform
 

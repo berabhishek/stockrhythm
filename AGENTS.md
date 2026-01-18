@@ -38,6 +38,8 @@ Installs the CLI in editable mode for local iteration.
 ## Testing Guidelines
 - Framework: `pytest` with `pytest-asyncio` (asyncio mode is strict).
 - Naming: tests live in `tests/` and use `test_*.py`.
+- Always add unit tests for new features.
+- Run the relevant tests and ensure they pass before reporting completion.
 - Run locally:
 ```bash
 uv run pytest

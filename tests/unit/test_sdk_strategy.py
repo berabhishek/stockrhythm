@@ -140,13 +140,26 @@ async def test_strategy_backtest_invokes_engine(monkeypatch, tmp_path):
             self.db_path = db_path
             self.called = False
 
-        async def run(self, strategy, start_at, end_at, symbols=None, name=None):
+        async def run(
+            self,
+            strategy,
+            start_at,
+            end_at,
+            symbols=None,
+            name=None,
+            backend_url=None,
+            interval=None,
+            provider=None,
+        ):
             self.called = True
             self.strategy = strategy
             self.start_at = start_at
             self.end_at = end_at
             self.symbols = symbols
             self.name = name
+            self.backend_url = backend_url
+            self.interval = interval
+            self.provider = provider
             return 42
 
     monkeypatch.setattr("stockrhythm.backtest.BacktestEngine", FakeBacktestEngine)
@@ -159,6 +172,7 @@ async def test_strategy_backtest_invokes_engine(monkeypatch, tmp_path):
         symbols=["AAA"],
         db_path=str(tmp_path / "backtests.db"),
         name="demo",
+        provider="upstox",
     )
 
     assert run_id == 42

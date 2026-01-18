@@ -128,6 +128,41 @@ async def test_backtest_client_submit_order_uses_last_tick(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_backtest_engine_fetches_provider_ticks_when_missing(tmp_path, monkeypatch):
+    db_path = tmp_path / "backtests.db"
+    engine = BacktestEngine(db_path=str(db_path))
+
+    fetched = [
+        Tick(symbol="TEST", price=101.0, volume=5.0, timestamp=datetime(2024, 1, 1, 9, 30), provider="upstox")
+    ]
+
+    async def fake_fetch(**kwargs):
+        assert kwargs.get("provider") == "upstox"
+        return fetched
+
+    monkeypatch.setattr("stockrhythm.backtest._fetch_ticks_from_backend", fake_fetch)
+
+    class DummyStrategy:
+        async def on_tick(self, tick: Tick):
+            return None
+
+        async def on_universe_init(self, symbols):
+            return None
+
+    run_id = await engine.run(
+        DummyStrategy(),
+        start_at="2024-01-01T09:30:00",
+        end_at="2024-01-01T09:31:00",
+        symbols=["TEST"],
+        backend_url="http://localhost:8000",
+        provider="upstox",
+    )
+
+    assert run_id == 1
+    assert engine.db.count_ticks("2024-01-01T09:30:00", "2024-01-01T09:31:00", ["TEST"]) == 1
+
+
+@pytest.mark.asyncio
 async def test_backtest_client_submit_order_falls_back_to_zero(tmp_path):
     db_path = tmp_path / "backtests.db"
     db = BacktestDB(db_path=str(db_path))

@@ -3,6 +3,7 @@ name = "stockrhythm-sdk"
 version = "0.1.0"
 dependencies = [
     "pydantic",
+    "httpx",
     "websockets"
 ]
 

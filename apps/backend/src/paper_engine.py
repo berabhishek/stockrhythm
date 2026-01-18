@@ -1,17 +1,17 @@
 import sqlite3
 from datetime import datetime
 from stockrhythm.models import Order
-import os
 
 DB_PATH = "paper_trades.db"
 
 class PaperEngine:
-    def __init__(self):
+    def __init__(self, db_path: str | None = None):
+        self.db_path = db_path or DB_PATH
         self._init_db()
 
     def _init_db(self):
         """Creates the SQLite database and tables if they don't exist."""
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
         # Orders Table
@@ -47,7 +47,7 @@ class PaperEngine:
         """
         Simulates an order execution and saves to SQLite.
         """
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
         # 1. Insert Order

@@ -106,6 +106,9 @@ class Strategy(ABC):
         symbols: Optional[List[str]] = None,
         db_path: str = "backtests.db",
         name: Optional[str] = None,
+        backend_url: Optional[str] = None,
+        interval: Optional[str] = None,
+        provider: Optional[str] = None,
     ) -> int:
         from .backtest import BacktestEngine
 
@@ -116,4 +119,7 @@ class Strategy(ABC):
             end_at=end_at,
             symbols=symbols,
             name=name,
+            backend_url=backend_url,
+            interval=interval,
+            provider=provider,
         )

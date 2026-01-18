@@ -2,6 +2,8 @@ import sqlite3
 from datetime import datetime
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
+import httpx
+
 from .models import Order, OrderType, Tick
 
 DateTimeInput = Union[str, datetime]
@@ -194,6 +196,34 @@ class BacktestDB:
         conn.commit()
         conn.close()
 
+    def count_ticks(
+        self,
+        start_at: DateTimeInput,
+        end_at: DateTimeInput,
+        symbols: Optional[Sequence[str]] = None,
+    ) -> int:
+        start_dt = _parse_datetime(start_at).isoformat()
+        end_dt = _parse_datetime(end_at).isoformat()
+
+        query = """
+            SELECT COUNT(*)
+            FROM market_ticks
+            WHERE timestamp >= ? AND timestamp <= ?
+        """
+        params: List[object] = [start_dt, end_dt]
+
+        if symbols:
+            placeholders = ", ".join("?" for _ in symbols)
+            query += f" AND symbol IN ({placeholders})"
+            params.extend(symbols)
+
+        conn = self._connect()
+        cursor = conn.cursor()
+        cursor.execute(query, params)
+        count = cursor.fetchone()[0] or 0
+        conn.close()
+        return int(count)
+
     def fetch_ticks(
         self,
         start_at: DateTimeInput,
@@ -274,7 +304,25 @@ class BacktestEngine:
         end_at: DateTimeInput,
         symbols: Optional[Sequence[str]] = None,
         name: Optional[str] = None,
+        *,
+        backend_url: Optional[str] = None,
+        interval: Optional[str] = None,
+        provider: Optional[str] = None,
     ) -> int:
+        if backend_url:
+            if not symbols:
+                raise ValueError("Provider-backed backtests require symbols to be specified.")
+            if self.db.count_ticks(start_at, end_at, symbols) == 0:
+                ticks = await _fetch_ticks_from_backend(
+                    backend_url=backend_url,
+                    start_at=start_at,
+                    end_at=end_at,
+                    symbols=list(symbols),
+                    interval=interval,
+                    provider=provider,
+                )
+                self.db.insert_ticks(ticks)
+
         run_id = self.db.create_run(start_at=start_at, end_at=end_at, name=name)
         client = BacktestClient(self.db, run_id)
 
@@ -296,3 +344,35 @@ class BacktestEngine:
             self.db.finish_run(run_id, status=status)
 
         return run_id
+
+
+async def _fetch_ticks_from_backend(
+    *,
+    backend_url: str,
+    start_at: DateTimeInput,
+    end_at: DateTimeInput,
+    symbols: Sequence[str],
+    interval: Optional[str],
+    provider: Optional[str],
+) -> List[Tick]:
+    url = f"{backend_url.rstrip('/')}/backtest"
+    payload = {
+        "symbols": list(symbols),
+        "start": _parse_datetime(start_at).isoformat(),
+        "end": _parse_datetime(end_at).isoformat(),
+        "interval": interval,
+        "provider": provider,
+    }
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(url, json=payload)
+
+    if resp.status_code != 200:
+        raise ConnectionError(f"Backtest data fetch failed: {resp.status_code} - {resp.text}")
+
+    data = resp.json()
+    ticks_payload = data.get("ticks", [])
+    if not isinstance(ticks_payload, list):
+        raise ValueError("Backtest response missing ticks list.")
+
+    return [Tick(**item) for item in ticks_payload]

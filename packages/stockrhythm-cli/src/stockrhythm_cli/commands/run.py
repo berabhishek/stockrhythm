@@ -131,6 +131,9 @@ def run_backtest(
     symbols: Optional[List[str]],
     db_path: str,
     name: Optional[str],
+    backend_url: Optional[str],
+    interval: Optional[str],
+    provider: Optional[str],
 ) -> None:
     module = _load_module(file)
     strategy = _resolve_strategy(module, paper_trade=True)
@@ -142,6 +145,9 @@ def run_backtest(
             symbols=symbols,
             db_path=db_path,
             name=name,
+            backend_url=backend_url,
+            interval=interval,
+            provider=provider,
         )
     )
     typer.echo(f"Backtest completed. Run ID: {run_id}")
@@ -152,12 +158,16 @@ def run(
     filter_path: Optional[str] = typer.Option(None, "--filter"),
     paper: bool = typer.Option(False, "--paper", help="Run in paper trading mode."),
     live: bool = typer.Option(False, "--live", help="Run in live trading mode."),
-    backtest: bool = typer.Option(False, "--backtest", help="Run in backtest mode."),
+    backtest: bool = typer.Option(False, "--backtest", help="Run in backtest mode (supports provider fetch)."),
     start_at: Optional[str] = typer.Option(None, "--start", help="Backtest start datetime (ISO)."),
     end_at: Optional[str] = typer.Option(None, "--end", help="Backtest end datetime (ISO)."),
     symbols: Optional[List[str]] = typer.Option(None, "--symbol", help="Backtest symbol (repeatable)."),
     db_path: str = typer.Option("backtests.db", "--db-path", help="Backtest SQLite DB path."),
     name: Optional[str] = typer.Option(None, "--name", help="Backtest run name."),
+    use_provider: bool = typer.Option(False, "--use-provider", help="Fetch backtest data from backend provider."),
+    provider: Optional[str] = typer.Option(None, "--provider", help="Provider name for backend-backed backtests."),
+    backtest_url: Optional[str] = typer.Option(None, "--backtest-url", help="Backend HTTP URL for backtest data."),
+    interval: Optional[str] = typer.Option(None, "--interval", help="Provider interval for historical data."),
     backend_url: Optional[str] = typer.Option(None, "--backend-url"),
 ):
     if backtest and (paper or live):
@@ -170,8 +180,13 @@ def run(
             start_at = typer.prompt("Backtest start datetime (ISO)")
         if not end_at:
             end_at = typer.prompt("Backtest end datetime (ISO)")
+        if use_provider and not symbols:
+            raise typer.BadParameter("Use --symbol when fetching backtest data from a provider.")
 
         try:
+            provider_url = None
+            if use_provider:
+                provider_url = backtest_url or "http://127.0.0.1:8000"
             run_backtest(
                 file=Path(file),
                 start_at=start_at,
@@ -179,6 +194,9 @@ def run(
                 symbols=symbols,
                 db_path=db_path,
                 name=name,
+                backend_url=provider_url,
+                interval=interval,
+                provider=provider,
             )
         except KeyboardInterrupt:
             typer.echo("Backtest interrupted.")

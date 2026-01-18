@@ -590,7 +590,9 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "python-dotenv" },
+    { name = "stockrhythm-cli" },
     { name = "stockrhythm-sdk" },
+    { name = "typer" },
     { name = "uvicorn" },
     { name = "websockets" },
 ]
@@ -607,7 +609,9 @@ dev = [
     { name = "pytest-asyncio", specifier = ">=0.21" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "stockrhythm-cli", editable = "packages/stockrhythm-cli" },
     { name = "stockrhythm-sdk", editable = "packages/stockrhythm-sdk" },
+    { name = "typer", specifier = ">=0.9.0" },
     { name = "uvicorn", specifier = ">=0.30.0" },
     { name = "websockets", specifier = ">=12.0" },
 ]
@@ -617,12 +621,14 @@ name = "stockrhythm-sdk"
 version = "0.1.0"
 source = { editable = "packages/stockrhythm-sdk" }
 dependencies = [
+    { name = "httpx" },
     { name = "pydantic" },
     { name = "websockets" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx" },
     { name = "pydantic" },
     { name = "websockets" },
 ]
