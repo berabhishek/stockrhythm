@@ -18,7 +18,7 @@ StockRhythm provides a modern, type-safe Python SDK for writing trading strategi
     ```bash
     curl -LsSf https://astral.sh/uv/install.sh | sh
     ```
-*   **Docker**: For running the local backend engine.
+
 
 ## 🛠 Architecture Philosophy
 
@@ -44,11 +44,6 @@ uv sync
 ### 2. Start the Engine
 
 Launch the backend services (Mock Provider is enabled by default).
-
-**Using Docker (Recommended):**
-```bash
-docker-compose up -d backend
-```
 
 **Development Mode (Directly via Python):**
 ```bash
@@ -122,7 +117,7 @@ The backend configuration is located in `apps/backend/config.yaml`.
 1.  Open `apps/backend/config.yaml`.
 2.  Change `active_provider` to `"upstox"`.
 3.  Fill in your `api_key` and `token`.
-4.  Restart the backend: `docker-compose restart backend`.
+4.  Restart the backend.
 
 ## 🤝 Contributing
 
