@@ -45,9 +45,9 @@ uv sync
 
 Launch the backend services (Mock Provider is enabled by default).
 
-**Development Mode (Directly via Python):**
+**Development Mode:**
 ```bash
-uv run python -m apps.backend.src --broker mock --port 8000
+uv run uvicorn apps.backend.src.main:app --port 8000
 ```
 
 ### 3. Install the CLI Tool (Optional but Recommended)
