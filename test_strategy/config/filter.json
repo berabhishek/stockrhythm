@@ -1,0 +1,17 @@
+{
+  "candidates": {
+    "type": "watchlist",
+    "symbols": ["RELIANCE"]
+  },
+  "conditions": [
+    {
+      "field": "day_volume",
+      "op": "gt",
+      "value": 1
+    }
+  ],
+  "sort": [],
+  "max_symbols": 50,
+  "refresh_seconds": 60,
+  "grace_seconds": 0
+}

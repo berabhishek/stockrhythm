@@ -1,0 +1,2 @@
+stockrhythm-sdk @ file:///Users/abhishekbera/Docs/stockrhythm/packages/stockrhythm-sdk
+jupyterlab

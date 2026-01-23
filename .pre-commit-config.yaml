@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.0
+    hooks:
+      - id: ruff
+        name: ruff lint
+        # run in check-only mode on commit so formatting doesn't modify files and
+        # cause the commit to be blocked if there are unstaged changes
+        args: []
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: trim trailing whitespace
+      - id: end-of-file-fixer
+        name: fix EOF
+      - id: check-yaml
+        name: check YAML
+      - id: check-json
+        name: check JSON
+      - id: debug-statements
+        name: check for debugger imports
+      - id: check-ast
+        name: check Python AST
+      - id: mixed-line-ending
+        name: mixed line ending
+        args: [--fix=lf]
