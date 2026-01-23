@@ -11,6 +11,7 @@ from stockrhythm.models import Tick
 from ..auth_store import AuthStore
 from ..upstox_auth import exchange_auth_code
 from .base import MarketDataProvider
+from .csv_utils import CsvInstrumentMaster
 
 logger = logging.getLogger("UpstoxProvider")
 
@@ -29,6 +30,9 @@ class UpstoxProvider(MarketDataProvider):
         self.auth_code = os.getenv("UPSTOX_AUTH_CODE", "").strip()
         self.redirect_uri = os.getenv("UPSTOX_REDIRECT_URI", "").strip()
         self.auth_store = auth_store
+        
+        # Helper to resolve SYMBOL -> NSE_EQ|ISIN
+        self.instrument_master = CsvInstrumentMaster()
 
         if not self.api_key or not self.api_secret:
             logger.warning(
@@ -141,6 +145,15 @@ class UpstoxProvider(MarketDataProvider):
         if not self.access_token:
             await self.connect()
 
+        # Helper to ensure YYYY-MM-DD
+        def _fmt_date(d: str) -> str:
+            if "T" in d:
+                return d.split("T")[0]
+            return d
+
+        start_date = _fmt_date(start_at)
+        end_date = _fmt_date(end_at)
+
         interval_segment = self._format_interval(interval)
         headers = {
             "Authorization": f"Bearer {self.access_token}",
@@ -150,11 +163,20 @@ class UpstoxProvider(MarketDataProvider):
 
         ticks: list[Tick] = []
         for symbol in symbols:
-            instrument_key = self._normalize_symbol(symbol)
+            # Try to resolve symbol to instrument_key using CSV master
+            # e.g. "SBIN" -> "NSE_EQ|INE062A01020"
+            resolved_key = self.instrument_master.get_upstox_key(symbol)
+            
+            if not resolved_key:
+                # If lookup fails, maybe user passed "NSE_EQ|..." directly
+                instrument_key = self._normalize_symbol(symbol)
+            else:
+                instrument_key = resolved_key
+
             encoded_key = quote(instrument_key, safe="")
             url = (
                 f"{self.base_url}/historical-candle/"
-                f"{encoded_key}/{interval_segment}/{end_at}/{start_at}"
+                f"{encoded_key}/{interval_segment}/{end_date}/{start_date}"
             )
             resp = await self.client.get(url, headers=headers)
             if resp.status_code != 200:

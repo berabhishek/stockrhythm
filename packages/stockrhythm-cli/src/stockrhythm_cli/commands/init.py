@@ -12,13 +12,15 @@ from stockrhythm.models import FilterOp
 class MyStrategy(Strategy):
     async def on_tick(self, tick: Tick):
         # Example signal: replace with your alpha.
+        # This basic example prints prices for verification.
+        # print(f"[{tick.timestamp}] {tick.symbol}: {tick.price}")
         if tick.price < 100:
             await self.buy(tick.symbol, 1)
 
 def get_filter():
     # Return a UniverseFilter object or a UniverseFilterSpec.
     return (
-        UniverseFilter.from_watchlist(["RELIANCE"])
+        UniverseFilter.from_watchlist(["SBIN"])
         .where("day_volume", FilterOp.GT, 1)
     )
 
@@ -40,7 +42,7 @@ FILTER_JSON = """
 {
   "candidates": {
     "type": "watchlist",
-    "symbols": ["RELIANCE"]
+    "symbols": ["SBIN"]
   },
   "conditions": [
     {
@@ -53,6 +55,105 @@ FILTER_JSON = """
   "max_symbols": 50,
   "refresh_seconds": 60,
   "grace_seconds": 0
+}
+"""
+
+NOTEBOOK_TEMPLATE = """
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Strategy Backtest\\n",
+    "\\n",
+    "This notebook demonstrates how to run a backtest for your strategy using the StockRhythm SDK."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import asyncio\\n",
+    "import os\\n",
+    "import sys\\n",
+    "from pathlib import Path\\n",
+    "\\n",
+    "# Ensure the project root is in sys.path so we can import the strategy\\n",
+    "project_root = Path(\\"..\\").resolve()\\n",
+    "if str(project_root) not in sys.path:\\n",
+    "    sys.path.insert(0, str(project_root))\\n",
+    "\\n",
+    "from stockrhythm.backtest import BacktestEngine\\n",
+    "from strategies.strategy import MyStrategy"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Configuration\\n",
+    "START_DATE = \\"2024-01-08\\"\\n",
+    "END_DATE = \\"2024-01-10\\"\\n",
+    "SYMBOLS = [\\"SBIN\\"]\\n",
+    "PROVIDER = \\"upstox\\"\\n",
+    "INTERVAL = \\"1minute\\"\\n",
+    "BACKEND_URL = \\"http://127.0.0.1:8000\\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "async def run_backtest():\\n",
+    "    engine = BacktestEngine(db_path=\\"../backtests.db\\")\\n",
+    "    strategy = MyStrategy()\\n",
+    "    \\n",
+    "    print(f\\"Running backtest for {SYMBOLS} from {START_DATE} to {END_DATE}...\\")\\n",
+    "    run_id = await engine.run(\\n",
+    "        strategy=strategy,\\n",
+    "        start_at=START_DATE,\\n",
+    "        end_at=END_DATE,\\n",
+    "        symbols=SYMBOLS,\\n",
+    "        backend_url=BACKEND_URL,\\n",
+    "        provider=PROVIDER,\\n",
+    "        interval=INTERVAL\\n",
+    "    )\\n",
+    "    print(f\\"Backtest completed. Run ID: {run_id}\\")\\n",
+    "    return run_id\\n",
+    "\\n",
+    "# Run in the existing loop if available (Jupyter handles this)\\n",
+    "await run_backtest()"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.12.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
 }
 """
 
@@ -91,8 +192,24 @@ If you prefer editing JSON instead, update config/filter.json and run:
    stockrhythm run --paper --file strategies/strategy.py --filter config/filter.json
 
 ## Notebooks
-Use notebooks/ for indicator research and idea exploration. When the logic
-is stable, copy it into strategies/strategy.py and wire it into on_tick.
+Use notebooks/ for indicator research and idea exploration. 
+
+To run the backtest notebook:
+1. Ensure dependencies are installed:
+   pip install -r requirements.txt
+
+2. Launch Jupyter Lab:
+   uv run --with-requirements requirements.txt jupyter lab
+   # OR
+   jupyter lab
+
+3. Open `notebooks/backtest.ipynb` and run all cells.
+   *Ensure the backend is running on port 8000.*
+
+### Historical Data (Upstox)
+To run the backtest notebook against Upstox historical data, start the backend
+with the Upstox provider (from the StockRhythm repo root):
+   uv run python -m apps.backend.src --broker upstox --port 8000
 """
 
 GITIGNORE = """
@@ -107,6 +224,7 @@ __pycache__/
 # Local data/artifacts
 data/*
 paper_trades.db
+backtests.db
 """
 
 # --- Init Logic ---
@@ -125,7 +243,7 @@ def init(name: str):
         "strategies/__init__.py": "",
         "config/filter.json": FILTER_JSON,
         "data/.gitkeep": "",
-        "notebooks/.gitkeep": "",
+        "notebooks/backtest.ipynb": NOTEBOOK_TEMPLATE,
         ".gitignore": GITIGNORE,
     }
 

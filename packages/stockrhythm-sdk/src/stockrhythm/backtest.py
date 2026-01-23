@@ -313,6 +313,7 @@ class BacktestEngine:
             if not symbols:
                 raise ValueError("Provider-backed backtests require symbols to be specified.")
             if self.db.count_ticks(start_at, end_at, symbols) == 0:
+                print(f"Fetching ticks from backend for {symbols}...")
                 ticks = await _fetch_ticks_from_backend(
                     backend_url=backend_url,
                     start_at=start_at,
@@ -321,7 +322,9 @@ class BacktestEngine:
                     interval=interval,
                     provider=provider,
                 )
-                self.db.insert_ticks(ticks)
+                print(f"Fetched {len(ticks)} ticks. Inserting into DB...")
+                count = self.db.insert_ticks(ticks)
+                print(f"Inserted {count} ticks.")
 
         run_id = self.db.create_run(start_at=start_at, end_at=end_at, name=name)
         client = BacktestClient(self.db, run_id)
@@ -356,10 +359,19 @@ async def _fetch_ticks_from_backend(
     provider: Optional[str],
 ) -> List[Tick]:
     url = f"{backend_url.rstrip('/')}/backtest"
+    
+    # Helper to format date for provider APIs (Upstox dislikes ISO time)
+    def _fmt(dt_input: DateTimeInput) -> str:
+        dt = _parse_datetime(dt_input)
+        # If valid time is 00:00:00, send date only
+        if dt.hour == 0 and dt.minute == 0 and dt.second == 0 and dt.microsecond == 0:
+            return dt.date().isoformat()
+        return dt.isoformat()
+
     payload = {
         "symbols": list(symbols),
-        "start": _parse_datetime(start_at).isoformat(),
-        "end": _parse_datetime(end_at).isoformat(),
+        "start": _fmt(start_at),
+        "end": _fmt(end_at),
         "interval": interval,
         "provider": provider,
     }

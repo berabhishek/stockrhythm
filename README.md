@@ -84,6 +84,11 @@ First, install the local dependencies:
 pip install -r requirements.txt
 ```
 
+To run research notebooks:
+```bash
+uv run --with-requirements requirements.txt jupyter lab
+```
+
 Then, execute your strategy using the provided runner script. The SDK automatically detects trading modes via CLI flags:
 
 ```bash
